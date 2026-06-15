@@ -2,15 +2,15 @@ import { Pool, Client } from 'pg'
 
 const pool = new Pool();
 
-export class db {
-    constructor(){
+/*export class db {             //I'm not sure whether I need
+    constructor(dbName, ){    //this part yet.
         try{
-
+            this.name = dbName
         } catch ( error ) {
             return;
         }
     }
-}
+}*/
 
 export const query = async (text, params) => {
     const start = Date.now();

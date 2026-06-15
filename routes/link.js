@@ -1,5 +1,5 @@
 import Router from 'express-promise-router'
-import {db} from '../db/index.js'
+import {query, getClient} from '../db/index.js'
 
 const router = new Router()
 
