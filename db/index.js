@@ -1,16 +1,46 @@
 import { Pool, Client } from 'pg'
 
 const pool = new Pool();
+const createLinkTableQuery = `
+CREATE TABLE links(
+    id SERIAL PRIMARY KEY,
+    origURL TEXT NOT NULL,
+    shortURL TEXT UNIQUE NOT NULL,
+);`;
+const createAnalyticsQuery = `
+CREATE TABLE analytics(
+    id SERIAL PRIMARY KEY,
+    lastEdit TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    clicks INTEGER DEFAULT 0,
+    );`;
+const checkIfExistsQuery = 
+    `SELECT EXISTS ( 
+    SELECT table_name FROM information_schema.tables WHERE table_name ILIKE \'links\'
+    );`;
 
-/*export class db {             //I'm not sure whether I need
+export class db {             //I'm not sure whether I need
     constructor(dbName, ){    //this part yet.
         try{
-            this.name = dbName
+            this.name = dbName;
+            if(!alreadyExists)
+                this.startUp();
         } catch ( error ) {
+            console.log('there was an error in db construct');
+            console.log(error);
             return;
         }
     }
-}*/
+}
+
+async function startUp()
+{
+    
+    let client = await pool.connect();
+    if(!client.query(checkIfExistsQuery))
+    {
+        client.query(createLinkTableQuery);
+    }
+}
 
 export const query = async (text, params) => {
     const start = Date.now();
@@ -42,3 +72,5 @@ export const getClient = async () => {
     }
     return client;
 }
+
+export default db;
