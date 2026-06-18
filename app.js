@@ -1,6 +1,7 @@
-import express from 'express'
+import express from 'express';
 import mountRoutes from './routes/index.js'
 import { Client, Pool } from 'pg';
+import { db, dbCheck } from './db/index.js';
 
 const createTableText = `
 CREATE TEMP TABLE links(
@@ -17,7 +18,7 @@ pool.on('error', (err, client) => {
 });
 
 //Create temp table
-async function createTestTable() {
+/*async function createTestTable() {
     await pool.query(createTableText);
     console.log('createTempTable() finished.');
 }
@@ -38,7 +39,24 @@ async function testLinkTable() {
 async function printTestLinkTable() {
     const result = await pool.query('SELECT * FROM links');
     console.log(result.rows);
-}
+}*/
+
+/*async function dbCheck()
+{
+    let testDB = new db(); //This should run db.startup()
+    console.log('db object created');
+    console.log(testDB.checkUniqueShort(`mad.r/risi`));
+    console.log('shortURL check')
+    testDB.addLinkPair(`https://youtu.be/JaPIWpe4psI`, `mad.r/risi`);
+    console.log('pair added');
+    testDB.query(`SELECT * FROM links`);
+    testDB.updateShort(`https://youtu.be/JaPIWpe4psI`, `mad.r/tasl`);
+    console.log('pair updated');
+    testDB.query(`SELECT * FROM LINKS`);
+    testDB.deletePair(`https://youtu.be/JaPIWpe4psI`);
+    console.log('pair deleted');
+    testDB.query(`SELECT * FROM links`);
+}*/
 
 const app = express();
 mountRoutes(app);
@@ -46,10 +64,12 @@ mountRoutes(app);
 app.listen(8080, async () => {
     console.log('REST API server running on port 8080');
     console.log('Attempting to create test table...');
-    createTestTable();
+    /*createTestTable();
     console.log('Function called. Attempting to add test link pair...');
     testLinkTable();
     console.log('Function called. Attempting to print test table');
-    printTestLinkTable();
-    await pool.end();
+    printTestLinkTable();*/
+    let testDB = new db();
+    dbCheck();
+    //await pool.end();
 });

@@ -29,5 +29,3 @@ const createLink = async (req,res) => {
         res.status(400).json({message: 'Error creating link', error: error.message});
     }
 };
-
-module.exports = { getLinks, getLinksById, createLink};
