@@ -1,7 +1,7 @@
 import express from 'express';
 import mountRoutes from './routes/index.js'
 import { Client, Pool } from 'pg';
-import { db, dbCheck } from './db/index.js';
+import { db, dbCheck } from './pgsql.js';
 
 const createTableText = `
 CREATE TEMP TABLE links(

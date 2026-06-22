@@ -1,6 +1,6 @@
 import { URL } from 'node:url';
-import db from '../db/index.js';
-import {client} from 'pg';
+//import db from '../pgsql.js';
+import { Client } from 'pg';
 
 class shortLink {
     constructor() {
@@ -12,7 +12,7 @@ class shortLink {
     }
 }
 
-function genShort(database)
+export function genShort()
 {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     while(true)

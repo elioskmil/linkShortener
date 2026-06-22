@@ -1,4 +1,5 @@
-import { Pool, Client } from 'pg'
+import { Pool, Client } from 'pg';
+import { genShort } from './models/shortLink.js';
 
 const pool = new Pool({user:'postgres'});
 const createLinkTableQuery = `
@@ -19,17 +20,18 @@ CREATE TABLE analytics(
     `SELECT EXISTS ( 
     SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = \$1
     );`;*/
-const checkUniqueShortQuery =`SELECT EXISTS(SELECT 1 FROM links WHERE shortURL ILIKE \$1)`;
+const checkUniqueShortQuery =`SELECT EXISTS(SELECT 1 FROM links WHERE shortURL ILIKE \$1);`;
 const addNewPairQuery =
- `INSERT INTO links (origURL, shortURL) ON CONFLICT DO NOTHING;
-    VALUES (\$1, \$2)`;
+ `INSERT INTO links (origURL, shortURL)
+    VALUES (\$1, \$2)
+     ON CONFLICT (shortUrl) DO NOTHING;`;
 const updateShortQuery =
     `UPDATE links
     SET shortURL = \$1
-    WHERE origURL = \$2`;
+    WHERE origURL = \$2;`;
 const deletePairQuery =
     `DELETE FROM links
-    WHERE origURL = \$1`;
+    WHERE origURL = \$1;`;
 
 export class db {             //I'm not sure whether I need
     constructor(){    //this part yet.
@@ -44,9 +46,9 @@ export class db {             //I'm not sure whether I need
     }
 }
 
-function startUp()
+async function startUp()
 {
-    query(createLinkTableQuery);
+    await query(createLinkTableQuery);
 }
 
 
@@ -87,18 +89,23 @@ export const getClient = async () => {
         return false;
     return true;
 }*/
-async function addLinkPair(newLink, newShort)
+async function addLinkPair(newLink, newShort='')
 {
     try{
-        await query(addNewPairQuery,[newLink,`mad.r/`+newShort]);
+        if (newShort==='')
+            newShort = genShort();
+        return await query(addNewPairQuery,[newLink,`mad.r/`+newShort]);
     }
     catch(error)
     {
+        console.log(error);
         return;
     }
 }
-async function updateShort(originalURL, newShort)
+async function updateShort(originalURL, newShort='')
 {
+    if(newShort==='')
+        newShort = genShort();
     return await query(updateShortQuery, [originalURL,'mad.r/'+newShort]);
 }
 async function deletePair(originalURL)
@@ -116,10 +123,13 @@ export async function dbCheck()
     await query(`SELECT * FROM links`);
     await updateShort(`https://youtu.be/JaPIWpe4psI`, `tasl`);
     console.log('pair updated');
-    await query(`SELECT * FROM links`, []);
+    let printAll = await query(`SELECT * FROM links`, []);          //@TODO Figure out how to strip this down to useful data
+    console.log(printAll);
+    console.log('Printed all 1');
     await deletePair(`https://youtu.be/JaPIWpe4psI`);
     console.log('pair deleted');
-    await query(`SELECT * FROM links`,[]);
-    console.log('Printed all');
+    printAll = await query(`SELECT * FROM links`,[]);
+    console.log(printAll);
+    console.log('Printed all 2');
     return;
 }

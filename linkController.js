@@ -1,4 +1,4 @@
-import origLink from '../models/origLink.js'
+import origLink from './models/origLink.js'
 
 const getLinks = async (req,res) => {
     try {
