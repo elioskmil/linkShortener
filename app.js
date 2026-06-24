@@ -69,7 +69,7 @@ app.listen(8080, async () => {
     testLinkTable();
     console.log('Function called. Attempting to print test table');
     printTestLinkTable();*/
-    let testDB = new db();
+    //let testDB = new db();
     dbCheck();
     //await pool.end();
 });

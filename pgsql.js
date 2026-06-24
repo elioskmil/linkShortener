@@ -33,6 +33,10 @@ const deletePairQuery =
     `DELETE FROM links
     WHERE origURL = \$1;`;
 
+const getFromIDQuery =
+    `SELECT FROM links
+    WHERE linkID =\$1;`;
+
 export class db {             //I'm not sure whether I need
     constructor(){    //this part yet.
         try{
@@ -52,7 +56,7 @@ async function startUp()
 }
 
 
-export const query = async (text, params) => {
+const query = async (text, params) => {
     const start = Date.now();
     const res = await pool.query(text, params);
     const duration = Date.now() - start;
@@ -60,7 +64,7 @@ export const query = async (text, params) => {
     return res;
 }
 
-export const getClient = async () => {
+const getClient = async () => {
     const client = await pool.connect();
     const query = client.query;
     const release = client.release;
@@ -112,6 +116,10 @@ async function deletePair(originalURL)
 {
     return await query(deletePairQuery, [originalURL]);
 }
+async function getFromID(queryID)
+{
+    return await query(getFromIDQuery, [queryID]);
+}
 export async function dbCheck()
 {
     console.log('startup starting up');
@@ -120,16 +128,24 @@ export async function dbCheck()
     //console.log('shortURL check')
     await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
     console.log('pair added');
-    await query(`SELECT * FROM links`);
+    let printAll = await query(`SELECT * FROM links`);
+    console.log(printAll);
+    console.log('Printed All 1');
+    let dupeResult = await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
+    console.log(dupeResult);
+    console.log('Printed dupe result');
+    console.log(dupeResult);
     await updateShort(`https://youtu.be/JaPIWpe4psI`, `tasl`);
     console.log('pair updated');
-    let printAll = await query(`SELECT * FROM links`, []);          //@TODO Figure out how to strip this down to useful data
+    printAll = await query(`SELECT * FROM links`, []);          //@TODO Figure out how to strip this down to useful data
     console.log(printAll);
-    console.log('Printed all 1');
+    console.log('Printed all 2');
     await deletePair(`https://youtu.be/JaPIWpe4psI`);
     console.log('pair deleted');
     printAll = await query(`SELECT * FROM links`,[]);
     console.log(printAll);
-    console.log('Printed all 2');
+    console.log('Printed all 3');
+    console.log('Dropping table w/ cascade');
+    await query(`DROP TABLE links CASCADE`);
     return;
 }

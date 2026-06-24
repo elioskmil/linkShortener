@@ -15,15 +15,11 @@ class shortLink {
 export function genShort()
 {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    while(true)
-    {               //This should make sure the short link is unique before it's in the SQL db
-        let short = '/';
-        for(let i = 0; i < 4; i++)
-        {
-            let randChar = Math.floor(Math.random() * characters.length);
-            short += characters.charAct(randChar);
-        }
-        if(!db.checkUniqueShort(short))//@TODO find a way that doesn't hold the program
-            return short;
+    let short = '/';
+    for(let i = 0; i < 4; i++)  //The pgsql query addNewPairQuery should prevent duplicate short links from being added
+    {
+        let randChar = Math.floor(Math.random() * characters.length);
+        short += characters.charAct(randChar);
     }
+    return short;
 }
