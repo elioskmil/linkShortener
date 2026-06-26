@@ -19,7 +19,7 @@ export function genShort()
     for(let i = 0; i < 4; i++)  //The pgsql query addNewPairQuery should prevent duplicate short links from being added
     {
         let randChar = Math.floor(Math.random() * characters.length);
-        short += characters.charAct(randChar);
+        short += characters.charAt(randChar);
     }
     return short;
 }

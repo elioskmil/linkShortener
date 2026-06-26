@@ -9,6 +9,13 @@ CREATE TABLE IF NOT EXISTS links(
     shortURL TEXT UNIQUE NOT NULL,
     clicks INTEGER DEFAULT 0
 );`;
+const createSequenceQuery = `
+CREATE SEQUENCE IF NOT EXISTS shortUrlAlt
+    INCREMENT BY 4
+    START WITH 1
+    MINVALUE 0
+    MAXVALUE 9999
+    CYCLE;`;
 const createAnalyticsQuery = `
 CREATE TABLE analytics(
     changeID SERIAL PRIMARY KEY,
@@ -24,7 +31,7 @@ const checkUniqueShortQuery =`SELECT EXISTS(SELECT 1 FROM links WHERE shortURL I
 const addNewPairQuery =
  `INSERT INTO links (origURL, shortURL)
     VALUES (\$1, \$2)
-     ON CONFLICT (shortUrl) DO NOTHING;`;
+     ON CONFLICT (shortUrl) DO UPDATE SET shortUrl = CONCAT('mad.r/', nextVal('shortUrlAlt'));`;
 const updateShortQuery =
     `UPDATE links
     SET shortURL = \$1
@@ -53,6 +60,7 @@ export class db {             //I'm not sure whether I need
 async function startUp()
 {
     await query(createLinkTableQuery);
+    await query(createSequenceQuery);
 }
 
 
@@ -87,8 +95,11 @@ const getClient = async () => {
     return client;
 }
 /*async function checkUniqueShort(newShort)
-{
+{                                               //This doesn't actually check for duplicates, so we're using the sequence
+    console.log('checkUniqueShort Start');      //As an alt in case of conflicts
     let rows = await query(checkUniqueShortQuery,[`mad.r/`+newShort]);
+    console.log('printing rows');
+    console.log(rows);
     if (rows === undefined || rows.length === 0)
         return false;
     return true;
@@ -96,8 +107,7 @@ const getClient = async () => {
 async function addLinkPair(newLink, newShort='')
 {
     try{
-        if (newShort==='')
-            newShort = genShort();
+        console.log(newShort);
         return await query(addNewPairQuery,[newLink,`mad.r/`+newShort]);
     }
     catch(error)
@@ -108,9 +118,7 @@ async function addLinkPair(newLink, newShort='')
 }
 async function updateShort(originalURL, newShort='')
 {
-    if(newShort==='')
-        newShort = genShort();
-    return await query(updateShortQuery, [originalURL,'mad.r/'+newShort]);
+        return await query(updateShortQuery, [originalURL,'mad.r/'+newShort]);
 }
 async function deletePair(originalURL)
 {
@@ -129,23 +137,27 @@ export async function dbCheck()
     await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
     console.log('pair added');
     let printAll = await query(`SELECT * FROM links`);
+    console.log('Print All 1 start')
     console.log(printAll);
-    console.log('Printed All 1');
+    console.log('Printed All 1 end');
     let dupeResult = await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
+    console.log('print dupe start');
     console.log(dupeResult);
     console.log('Printed dupe result');
-    console.log(dupeResult);
     await updateShort(`https://youtu.be/JaPIWpe4psI`, `tasl`);
     console.log('pair updated');
     printAll = await query(`SELECT * FROM links`, []);          //@TODO Figure out how to strip this down to useful data
+    console.log('print all 2 start');
     console.log(printAll);
-    console.log('Printed all 2');
+    console.log('Printed all 2 end');
     await deletePair(`https://youtu.be/JaPIWpe4psI`);
     console.log('pair deleted');
     printAll = await query(`SELECT * FROM links`,[]);
+    console.log('print all 3 start')
     console.log(printAll);
-    console.log('Printed all 3');
+    console.log('Printed all 3 end');
     console.log('Dropping table w/ cascade');
     await query(`DROP TABLE links CASCADE`);
+    await query(`DROP SEQUENCE shortUrlAlt CASCADE`);
     return;
 }
