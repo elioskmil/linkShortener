@@ -4,4 +4,5 @@ const mountRoutes = (app) => {
     app.use('/links', links)
 }
 
+
 export default mountRoutes

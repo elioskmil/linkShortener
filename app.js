@@ -1,7 +1,7 @@
 import express from 'express';
 import mountRoutes from './routes/index.js'
 import { Client, Pool } from 'pg';
-import { db, dbCheck } from './pgsql.js';
+import { db, dbCheck, getAll } from './pgsql.js';
 
 const createTableText = `
 CREATE TEMP TABLE links(
@@ -60,6 +60,15 @@ async function printTestLinkTable() {
 
 const app = express();
 mountRoutes(app);
+
+app.get('/',(req, res) => {
+    res.send('Welcome to my API');
+});
+
+app.get('/links', async (req,res) =>  {
+    let allLinks = await getAll();
+    res.send(allLinks);
+});
 
 app.listen(8080, async () => {
     console.log('REST API server running on port 8080');

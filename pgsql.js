@@ -5,7 +5,7 @@ const pool = new Pool({user:'postgres'});
 const createLinkTableQuery = `
 CREATE TABLE IF NOT EXISTS links(
     linkID SERIAL PRIMARY KEY,
-    origURL TEXT NOT NULL,
+    origURL TEXT UNIQUE NOT NULL,
     shortURL TEXT UNIQUE NOT NULL,
     clicks INTEGER DEFAULT 0
 );`;
@@ -23,15 +23,11 @@ CREATE TABLE analytics(
     oldShort TEXT NOT NULL,
     linkFK INTEGER REFERENCES links(linkID)
     );`;
-/*const checkIfExistsQuery =
-    `SELECT EXISTS ( 
-    SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = \$1
-    );`;*/
 const checkUniqueShortQuery =`SELECT EXISTS(SELECT 1 FROM links WHERE shortURL ILIKE \$1);`;
 const addNewPairQuery =
  `INSERT INTO links (origURL, shortURL)
     VALUES (\$1, \$2)
-     ON CONFLICT (shortUrl) DO UPDATE SET shortUrl = CONCAT('mad.r/', nextVal('shortUrlAlt'));`;
+    ON CONFLICT (shortUrl) DO UPDATE SET shortUrl = CONCAT('mad.r/', nextVal('shortUrlAlt'));`;
 const updateShortQuery =
     `UPDATE links
     SET shortURL = \$1
@@ -104,29 +100,44 @@ const getClient = async () => {
         return false;
     return true;
 }*/
-async function addLinkPair(newLink, newShort='')
+export async function addLinkPair(newLink, newShort='')
 {
     try{
-        console.log(newShort);
-        return await query(addNewPairQuery,[newLink,`mad.r/`+newShort]);
+        //console.log(newShort);
+        let response = await query(addNewPairQuery,[newLink,`mad.r/`+newShort]);
+        return response.rows;
     }
     catch(error)
     {
-        console.log(error);
-        return;
+        console.log(error.code);
+        if(error.code==='23505') //This should be the code for a unique conflict
+        {                        //The ON CONFLICT in the query should handle shortURL conflicts
+            if(error.constraint.includes('origURL'))
+                console.log('Log: origURL already exists');
+                return 'origURL already exists';
+            return 'there was some other conflict';
+        }
     }
 }
-async function updateShort(originalURL, newShort='')
+export async function updateShort(originalURL, newShort='')
 {
-        return await query(updateShortQuery, [originalURL,'mad.r/'+newShort]);
+    let response = await query(updateShortQuery, [originalURL,'mad.r/'+newShort]);
+    return response.rows;
 }
-async function deletePair(originalURL)
+export async function deletePair(originalURL)
 {
-    return await query(deletePairQuery, [originalURL]);
+    let response = await query(deletePairQuery, [originalURL]);
+    return response.rows;
 }
-async function getFromID(queryID)
+export async function getFromID(queryID)
 {
-    return await query(getFromIDQuery, [queryID]);
+    let response =  await query(getFromIDQuery, [queryID]);
+    return response.rows;
+}
+export async function getAll()
+{
+    let response = await query('SELECT * FROM links', []);
+    return response.rows;
 }
 export async function dbCheck()
 {
@@ -136,28 +147,36 @@ export async function dbCheck()
     //console.log('shortURL check')
     await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
     console.log('pair added');
-    let printAll = await query(`SELECT * FROM links`);
+    let printAll = await getAll();
     console.log('Print All 1 start')
+    console.log(typeof(printAll));
     console.log(printAll);
     console.log('Printed All 1 end');
     let dupeResult = await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
     console.log('print dupe start');
+    console.log(typeof(dupeResult));
     console.log(dupeResult);
     console.log('Printed dupe result');
+    console.log('checking origURL dupe');
+    dupeResult = await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `tasl`);
+    console.log('dupe added');
+    console.log(dupeResult);
+    console.log('Updating pair');
     await updateShort(`https://youtu.be/JaPIWpe4psI`, `tasl`);
     console.log('pair updated');
-    printAll = await query(`SELECT * FROM links`, []);          //@TODO Figure out how to strip this down to useful data
+    printAll = await getAll();
     console.log('print all 2 start');
     console.log(printAll);
     console.log('Printed all 2 end');
     await deletePair(`https://youtu.be/JaPIWpe4psI`);
     console.log('pair deleted');
-    printAll = await query(`SELECT * FROM links`,[]);
+    printAll = await getAll();
     console.log('print all 3 start')
     console.log(printAll);
     console.log('Printed all 3 end');
-    console.log('Dropping table w/ cascade');
-    await query(`DROP TABLE links CASCADE`);
-    await query(`DROP SEQUENCE shortUrlAlt CASCADE`);
+    await addLinkPair(`https://youtu.be/JaPIWpe4psI`, `risi`);
+    //console.log('Dropping table w/ cascade');
+    //await query(`DROP TABLE links CASCADE`);
+    //await query(`DROP SEQUENCE shortUrlAlt CASCADE`);
     return;
 }
