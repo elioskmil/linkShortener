@@ -18,3 +18,5 @@ router.get('/api/links', async (req, res) => {
     let links = await getAll();
     res.json(links);
 });
+
+//router.get('/api/links')

@@ -27,17 +27,19 @@ const checkUniqueShortQuery =`SELECT EXISTS(SELECT 1 FROM links WHERE shortURL I
 const addNewPairQuery =
  `INSERT INTO links (origURL, shortURL)
     VALUES (\$1, \$2)
-    ON CONFLICT (shortUrl) DO UPDATE SET shortUrl = CONCAT('mad.r/', nextVal('shortUrlAlt'));`;
+    ON CONFLICT (shortUrl) DO UPDATE SET shortUrl = nextVal('shortUrlAlt');`;
 const updateShortQuery =
     `UPDATE links
     SET shortURL = \$1
     WHERE origURL = \$2;`;
+const getFromShortQuery =
+    `SELECT origUrl FROM links
+    WHERE shortUrl = \$1;`;
 const deletePairQuery =
     `DELETE FROM links
     WHERE origURL = \$1;`;
-
 const getFromIDQuery =
-    `SELECT FROM links
+    `SELECT * FROM links
     WHERE linkID =\$1;`;
 
 export class db {             //I'm not sure whether I need
@@ -104,18 +106,19 @@ export async function addLinkPair(newLink, newShort='')
 {
     try{
         //console.log(newShort);
-        let response = await query(addNewPairQuery,[newLink,`mad.r/`+newShort]);
+        let response = await query(addNewPairQuery,[newLink, newShort]);
         return response.rows;
     }
     catch(error)
     {
-        console.log(error.code);
+        //console.log(error);
+        //console.log(error.code);
         if(error.code==='23505') //This should be the code for a unique conflict
         {                        //The ON CONFLICT in the query should handle shortURL conflicts
             if(error.constraint.includes('origURL'))
-                console.log('Log: origURL already exists');
+                //console.log('Log: origURL already exists');
                 return 'origURL already exists';
-            return 'there was some other conflict';
+            return 'Conflict Error other than OrigURL or ShortURL';
         }
     }
 }
@@ -138,6 +141,13 @@ export async function getAll()
 {
     let response = await query('SELECT * FROM links', []);
     return response.rows;
+}
+export async function getFromShort(queryShort)
+{
+    let response = await query(getFromShortQuery, [queryShort]);
+    console.log('getFromShort');
+    console.log(response.rows[0].origurl);
+    return response.rows[0].origurl;
 }
 export async function dbCheck()
 {

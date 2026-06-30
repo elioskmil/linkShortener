@@ -1,7 +1,7 @@
 import express from 'express';
 import mountRoutes from './routes/index.js'
 import { Client, Pool } from 'pg';
-import { db, dbCheck, getAll } from './pgsql.js';
+import { addLinkPair, db, dbCheck, getAll, getFromID, getFromShort } from './pgsql.js';
 
 const createTableText = `
 CREATE TEMP TABLE links(
@@ -70,6 +70,22 @@ app.get('/links', async (req,res) =>  {
     res.send(allLinks);
 });
 
+app.get('/links/:id', async (req,res) => {
+    let gotLink = await getFromID(req.params.id);
+    res.send(gotLink);
+});
+
+app.get('/madr/:short', async (req,res) => {
+    let longLink = await getFromShort(req.params.short);
+    //res.send(longLink);
+    //@TODO add clicks increment here
+    res.redirect(longLink);
+});
+
+app.put('/add/:longLink', async (req,res) => {
+    addLinkPair(req.params.longLink);
+    res.send('Something happened');
+})
 app.listen(8080, async () => {
     console.log('REST API server running on port 8080');
     console.log('Attempting to create test table...');
