@@ -106,6 +106,8 @@ export async function addLinkPair(newLink, newShort='')
 {
     try{
         //console.log(newShort);
+        if(newShort==='')
+            newShort = genShort();
         let response = await query(addNewPairQuery,[newLink, newShort]);
         return response.rows;
     }
